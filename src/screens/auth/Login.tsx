@@ -1,20 +1,21 @@
-import { useState, useEffect } from 'react';
-import { Image, Alert, Text, TouchableOpacity, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useDispatch, useSelector } from 'react-redux';
+import React, {useEffect, useState} from 'react';
+import {Alert, Image, Text, TouchableOpacity, View, type TextStyle} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
 
+import {authLogin} from '../../app/actions';
+import type {RootState} from '../../app/reducers';
 import CustomButton from '../../components/CustomButton';
 import CustomTextInput from '../../components/CustomTextInput';
-import { IMG, ROUTES } from '../../utils';
-import { authLogin } from '../../app/actions';
+import {IMG, ROUTES} from '../../utils';
 
-const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+const Login = (): React.JSX.Element => {
+  const [username, setUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
 
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const dispatch = useDispatch();
-  const auth = useSelector(state => state.auth);
+  const auth = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     if (!auth.isLoading && auth.isError && auth.error) {
@@ -22,7 +23,7 @@ const Login = () => {
     }
   }, [auth.isLoading, auth.isError, auth.error]);
 
-  const inputStyle = {
+  const inputStyle: TextStyle = {
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -41,21 +42,16 @@ const Login = () => {
         backgroundColor: '#F8FAFC',
         alignItems: 'center',
         justifyContent: 'center',
-      }}
-    >
-      <Image
-        source={IMG.LOGO}
-        style={{ width: 220, height: 80, marginBottom: 30 }}
-        resizeMode="contain"
-      />
+      }}>
+      <Image source={IMG.LOGO} style={{width: 220, height: 80, marginBottom: 30}} resizeMode="contain" />
 
-      <View style={{ width: '100%' }}>
+      <View style={{width: '100%'}}>
         <CustomTextInput
           label="Email"
           placeholder="Enter Email"
           value={username}
           onChangeText={setUsername}
-          containerStyle={{ marginBottom: 15 }}
+          containerStyle={{marginBottom: 15}}
           textStyle={inputStyle}
         />
 
@@ -65,7 +61,7 @@ const Login = () => {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          containerStyle={{ marginBottom: 20 }}
+          containerStyle={{marginBottom: 20}}
           textStyle={inputStyle}
         />
       </View>
@@ -78,20 +74,20 @@ const Login = () => {
           width: '85%',
           marginVertical: 15,
         }}
-        textStyle={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}
+        textStyle={{color: '#FFF', fontWeight: 'bold', fontSize: 16}}
         onPress={() => {
           if (!username || !password) {
             Alert.alert('Invalid Credentials', 'Please enter valid username and password');
             return;
           }
-          dispatch(authLogin({ username, password }));
+          dispatch(authLogin({username, password}));
         }}
       />
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
-        <Text style={{ color: '#374151' }}>Create an account?</Text>
+      <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 10}}>
+        <Text style={{color: '#374151'}}>Create an account?</Text>
         <TouchableOpacity onPress={() => navigation.navigate(ROUTES.REGISTER)}>
-          <Text style={{ color: '#10B981', marginLeft: 6, fontWeight: 'bold' }}>Register</Text>
+          <Text style={{color: '#10B981', marginLeft: 6, fontWeight: 'bold'}}>Register</Text>
         </TouchableOpacity>
       </View>
     </View>

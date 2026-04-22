@@ -1,9 +1,9 @@
 buildscript {
     ext {
-        buildToolsVersion = "36.0.0"
+        buildToolsVersion = "35.0.0"  // This can remain at 35.0.0
         minSdkVersion = 24
-        compileSdkVersion = 36
-        targetSdkVersion = 36
+        compileSdkVersion = 36        // Change from 35 to 36
+        targetSdkVersion = 35          // targetSdk can stay at 35 for now
         ndkVersion = "27.1.12297006"
         kotlinVersion = "2.1.20"
     }
@@ -12,9 +12,24 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.2.1") 
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+    }
+}
+
+// 1. Move the Async Storage local_repo into allprojects
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+
+        // This is the CRITICAL line that fixes the "shared_storage" error
+        maven { url "$rootDir/../node_modules/@react-native-async-storage/async-storage/android/local_repo" }
+
+        // Standard React Native resolution
+        maven { url "$rootDir/../node_modules/react-native/android" }
+        maven { url 'https://www.jitpack.io' }
     }
 }
 
