@@ -1,6 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, type TextStyle, View, type ViewStyle} from 'react-native';
 import {TextInput} from 'react-native-gesture-handler';
+import {colors} from '../theme/colors';
 
 interface CustomTextInputProps {
   label?: string;
@@ -10,6 +11,9 @@ interface CustomTextInputProps {
   textStyle?: TextStyle;
   containerStyle?: ViewStyle;
   secureTextEntry?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'number-pad';
+  editable?: boolean;
 }
 
 const CustomTextInput = ({
@@ -20,6 +24,9 @@ const CustomTextInput = ({
   textStyle,
   containerStyle,
   secureTextEntry = false,
+  autoCapitalize,
+  keyboardType,
+  editable = true,
 }: CustomTextInputProps): React.JSX.Element => {
   return (
     <View style={[styles.container, containerStyle]}>
@@ -29,7 +36,10 @@ const CustomTextInput = ({
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
-        placeholderTextColor="#9CA3AF"
+        autoCapitalize={autoCapitalize}
+        keyboardType={keyboardType}
+        placeholderTextColor={colors.muted}
+        editable={editable}
         style={[styles.input, textStyle]}
       />
     </View>
@@ -44,23 +54,25 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: '600',
     marginBottom: 6,
-    color: '#374151',
-    fontSize: 14,
+    color: colors.heading,
+    fontSize: 13,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   input: {
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    shadowColor: '#000',
+    borderColor: colors.border,
+    shadowColor: colors.cardShadow,
     shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.3,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1,
   },
 });
 

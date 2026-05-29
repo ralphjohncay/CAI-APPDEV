@@ -1,114 +1,219 @@
-import React, {useState} from 'react';
-import {Alert, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
 
+import {authRegister} from '../../app/actions';
+import type {RootState} from '../../app/reducers';
+import AppIcon from '../../components/AppIcon';
 import CustomButton from '../../components/CustomButton';
 import CustomTextInput from '../../components/CustomTextInput';
 import {ROUTES} from '../../utils';
+import {colors} from '../../theme/colors';
 
 const Register = (): React.JSX.Element => {
-  const [firstName, setFirstName] = useState<string>('');
-  const [middleName, setMiddleName] = useState<string>('');
-  const [lastName, setLastName] = useState<string>('');
-  const [birthdate, setBirthdate] = useState<string>('');
-  const [accepted, setAccepted] = useState<boolean>(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [accepted, setAccepted] = useState(false);
 
   const navigation = useNavigation<any>();
+  const dispatch = useDispatch();
+  const auth = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    if (!auth.isLoading && auth.isError && auth.error) {
+      Alert.alert('Registration Failed', auth.error);
+    }
+  }, [auth.isLoading, auth.isError, auth.error]);
+
+  useEffect(() => {
+    if (!auth.isLoading && auth.registerMessage && !auth.isError && !auth.session) {
+      Alert.alert('Registration Successful', auth.registerMessage, [
+        {text: 'OK', onPress: () => navigation.navigate(ROUTES.LOGIN)},
+      ]);
+    }
+  }, [auth.isLoading, auth.registerMessage, auth.isError, auth.session, navigation]);
 
   const onRegister = (): void => {
-    if (!firstName || !lastName || !birthdate) {
-      Alert.alert('Missing fields', 'Please fill First Name, Last Name and Birthdate');
+    if (!name || !email || !password) {
+      Alert.alert('Missing Fields', 'Please enter name, email, and password.');
       return;
     }
     if (!accepted) {
-      Alert.alert('Terms', 'You must accept terms and conditions to register');
+      Alert.alert('Terms Required', 'You must accept the terms to register.');
       return;
     }
-    Alert.alert('Success', 'Registration complete');
-    navigation.navigate(ROUTES.LOGIN);
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+    
+    if (name.trim().length < 2) {
+      Alert.alert('Invalid Name', 'Name must be at least 2 characters long.');
+      return;
+    }
+    
+    if (password.length < 6) {
+      Alert.alert('Weak Password', 'Password must be at least 6 characters long.');
+      return;
+    }
+    
+    dispatch(authRegister({name, email, password}));
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={{
-        flexGrow: 1,
-        padding: 20,
-        backgroundColor: '#F8FAFC',
-        justifyContent: 'center',
-      }}>
-      <View style={{width: '100%'}}>
-        {['First Name', 'Middle Name', 'Last Name', 'Birthdate'].map((label, idx) => (
-          <CustomTextInput
-            key={idx}
-            label={label}
-            placeholder={`Enter ${label}`}
-            value={
-              label === 'First Name'
-                ? firstName
-                : label === 'Middle Name'
-                  ? middleName
-                  : label === 'Last Name'
-                    ? lastName
-                    : birthdate
-            }
-            onChangeText={
-              label === 'First Name'
-                ? setFirstName
-                : label === 'Middle Name'
-                  ? setMiddleName
-                  : label === 'Last Name'
-                    ? setLastName
-                    : setBirthdate
-            }
-            containerStyle={{marginBottom: 15}}
-            textStyle={{
-              borderRadius: 10,
-              paddingHorizontal: 10,
-              paddingVertical: 8,
-              borderWidth: 1,
-              borderColor: '#CBD5E1',
-              backgroundColor: '#FFF',
-              fontWeight: '500',
-              color: '#111827',
-            }}
-          />
-        ))}
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Join RALPHS</Text>
+        <Text style={styles.subtitle}>Create your account</Text>
+      </View>
 
-        <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 20}}>
+      <View style={styles.formContainer}>
+        <CustomTextInput
+          label="Full Name"
+          placeholder="John Doe"
+          value={name}
+          onChangeText={setName}
+          containerStyle={styles.inputContainer}
+        />
+
+        <CustomTextInput
+          label="Email Address"
+          placeholder="you@example.com"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          containerStyle={styles.inputContainer}
+        />
+
+        <CustomTextInput
+          label="Password"
+          placeholder="••••••••"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          containerStyle={styles.inputContainer}
+        />
+
+        <View style={styles.checkboxContainer}>
           <TouchableOpacity
             onPress={() => setAccepted(!accepted)}
-            style={{
-              width: 24,
-              height: 24,
-              borderWidth: 1,
-              borderColor: '#6B7280',
-              borderRadius: 6,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: accepted ? '#16A34A' : 'transparent',
-            }}>
-            {accepted ? <Text style={{color: '#FFF', fontSize: 16}}>✓</Text> : null}
+            style={[styles.checkbox, accepted && styles.checkboxChecked]}>
+            {accepted ? <AppIcon name="check" size={18} color={colors.white} /> : null}
           </TouchableOpacity>
-          <Text style={{marginLeft: 10, color: '#374151', fontWeight: '500'}}>
-            I accept the Terms and Conditions
+          <Text style={styles.checkboxText}>
+            I accept the terms and conditions
           </Text>
         </View>
 
         <CustomButton
-          label="REGISTER"
-          containerStyle={{
-            backgroundColor: '#16A34A',
-            borderRadius: 12,
-            width: '85%',
-            alignSelf: 'center',
-            paddingVertical: 10,
-          }}
-          textStyle={{color: '#FFF', fontWeight: 'bold', fontSize: 16}}
+          label={auth.isLoading ? 'Creating Account…' : 'Create Account'}
+          disabled={auth.isLoading}
+          variant="accent"
+          containerStyle={styles.registerButton}
           onPress={onRegister}
         />
+      </View>
+
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Already have an account?</Text>
+        <TouchableOpacity onPress={() => navigation.navigate(ROUTES.LOGIN)}>
+          <Text style={styles.footerLink}>Sign In</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 20,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.heading,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: colors.muted,
+    marginTop: 8,
+  },
+  formContainer: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+    gap: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  checkmark: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  checkboxText: {
+    flex: 1,
+    color: colors.text,
+    fontWeight: '500',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  registerButton: {
+    marginTop: 8,
+  },
+  footer: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  footerText: {
+    color: colors.text,
+    fontSize: 14,
+  },
+  footerLink: {
+    color: colors.accent,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+});
 
 export default Register;

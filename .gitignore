@@ -37,6 +37,8 @@ local.properties
 
 # node.js
 #
+.env
+.env.local
 node_modules/
 npm-debug.log
 yarn-error.log
@@ -65,6 +67,9 @@ yarn-error.log
 
 # testing
 /coverage
+
+# Local API override (copy from src/config/api.local.example.ts)
+src/config/api.local.ts
 
 # Yarn
 .yarn/*

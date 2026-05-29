@@ -1,5 +1,95 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
+# RALPHS Footwear — React Native app
+
+Mobile client for the **RALPHS Footwear** Symfony 7 + API Platform backend. Catalog, cart, checkout, and orders use the **same MySQL database** as the website (no local mock catalog).
+
+## Backend API URL
+
+**Production (default)** — `src/config/api.js`:
+
+```js
+export const API_BASE_URL = 'https://finalscay-production.up.railway.app';
+```
+
+Health check: `GET https://finalscay-production.up.railway.app/health` → `OK`  
+API docs: https://finalscay-production.up.railway.app/api/docs
+
+Copy `.env.example` → `.env` (optional). All requests use `${API_BASE_URL}/api/...` via `getApiBaseUrl()` — never hardcode URLs in screens.
+
+### Railway (production)
+
+No env var needed; the app points at Railway by default. Use a **user that exists in the production MySQL database**.
+
+```powershell
+npm start
+npm run android   # or npm run ios
+```
+
+### Local Symfony (`symfony serve`)
+
+Override before starting Metro (restart Metro after changing):
+
+| Target | `EXPO_PUBLIC_API_URL` |
+|--------|------------------------|
+| iOS Simulator / web | `http://127.0.0.1:8000` |
+| Android Emulator | `http://10.0.2.2:8000` |
+| Physical device (Wi‑Fi) | `http://<YOUR_PC_LAN_IP>:8000` |
+
+```powershell
+$env:EXPO_PUBLIC_API_URL="http://127.0.0.1:8000"
+npm start
+```
+
+Or copy `src/config/api.local.example.ts` → `api.local.ts` and set `API_URL_OVERRIDE`.
+
+### Dev login (after `doctrine:fixtures:load`)
+
+| Email | Password | Role |
+|-------|----------|------|
+| customer@shoes.com | customer123 | Customer |
+| staff@shoes.com | staff123 | Staff |
+| admin@shoes.com | admin123 | Admin |
+
+Users can log in **without email verification** (only disabled accounts are blocked).
+
+### Live sync with the admin website
+
+- Products, services, prices, stock, and `active` flags come from `GET /api/products` and `GET /api/services` (same MySQL tables as admin).
+- Deactivating a product in admin hides it on the next app refresh or when revisiting Shop/Services.
+- Checkout uses `POST /api/orders/checkout` (writes the same `orders` / `order_items` tables the staff panel uses).
+- Order status changes in admin (approve, complete, cancel) appear after pull-to-refresh or reopening **Orders**.
+
+### API endpoints used by the app
+
+| Action | Endpoint |
+|--------|----------|
+| Login | `POST /api/login` |
+| Register | `POST /api/register` |
+| Profile | `GET /api/me` |
+| Catalog | `GET /api/products`, `GET /api/services` (public; auto-retries with JWT if required) |
+| Checkout | `POST /api/orders` (`items` or `orderItems`; customer from JWT) |
+| My orders | `GET /api/my-orders` (alias `/api/orders/mine`) → `{ "success", "orders": [...] }` |
+| App notifications | `GET /api/notifications` → `{ "success", "notifications": [...] }` (public; polls every 60s) |
+| Login | `{ "success", "token", "user": { id, email, name, roles } }` |
+
+### Notification bar (mobile + admin)
+
+- **Admin:** **App Notifications** in the admin sidebar (`/admin/notifications`) — create/edit messages; they sync to the app via the same Railway API.
+- **API:** `GET /api/notifications` (no auth required; logged-in users also see `customers` audience).
+- **Deploy backend:** run `php bin/console doctrine:migrations:migrate` on Railway/local Symfony before notifications appear.
+- **App:** bar at the top; dismiss is local; pull-to-refresh on screens still works; new admin messages show within ~60s or when returning to the app.
+
+### Test checklist (Railway)
+
+1. Log in with a production DB user (`POST /api/login`).
+2. Shop loads from `GET /api/products` (pull-to-refresh / reopen screen).
+3. Add a product in website admin → appears in app after refresh.
+4. Place order in app → visible in website admin orders.
+5. `GET /api/orders/mine` shows the new order.
+
+---
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.

@@ -1,0 +1,23 @@
+/** RALPHS Footwear — dark header + warm orange retail accents */
+export const colors = {
+  primary: '#1a1a1a',
+  primaryLight: '#2d2d2d',
+  accent: '#ff8c00',
+  accentLight: '#ffb347',
+  accentDark: '#e67e00',
+  heading: '#1a1a1a',
+  text: '#2b2b2b',
+  muted: '#757575',
+  background: '#fafafa',
+  backgroundAlt: '#fff5f0',
+  navbar: '#0c0c0c',
+  white: '#ffffff',
+  border: 'rgba(255, 140, 0, 0.15)',
+  cardShadow: 'rgba(0, 0, 0, 0.08)',
+  success: '#2d6a4f',
+  warning: '#ff8c00',
+  danger: '#c0392b',
+  info: '#3498db',
+  buttonGradient: ['#ffe8cc', '#ffc266', '#ff9933', '#ff7700'] as const,
+  heroGradient: ['#fff5f0', '#ffe8cc', '#ffc266', '#ff9933'] as const,
+};
