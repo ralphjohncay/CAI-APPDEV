@@ -1,6 +1,9 @@
 import React, {useEffect} from 'react';
 import {ActivityIndicator, View} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
+
+import CustomerAlertHost from '../components/CustomerAlertHost';
+import {navigationRef} from './navigationRef';
 import {useDispatch, useSelector} from 'react-redux';
 
 import AuthNav from './AuthNav';
@@ -26,7 +29,18 @@ const AppNavigation = (): React.JSX.Element => {
     );
   }
 
-  return <NavigationContainer>{isLoggedIn ? <MainNav /> : <AuthNav />}</NavigationContainer>;
+  return (
+    <NavigationContainer ref={navigationRef}>
+      {isLoggedIn ? (
+        <>
+          <CustomerAlertHost />
+          <MainNav />
+        </>
+      ) : (
+        <AuthNav />
+      )}
+    </NavigationContainer>
+  );
 };
 
 export default AppNavigation;
