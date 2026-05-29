@@ -8,8 +8,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import {useFocusEffect, useRoute} from '@react-navigation/native';
-import {useDispatch} from 'react-redux';
+import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
+import type {RootState} from '../app/reducers';
 
 import AppIcon from '../components/AppIcon';
 import CustomButton from '../components/CustomButton';
@@ -29,11 +30,17 @@ function productFingerprint(p: Product): string {
 
 const ProductDetailScreen = (): React.JSX.Element => {
   const route = useRoute<any>();
+  const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const productId = route.params?.productId as number;
+  const catalogProduct = useSelector((state: RootState) =>
+    state.products.items.find(p => p.id === productId),
+  );
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const fingerprintRef = useRef('');
+  const initialLoadDoneRef = useRef(false);
+  const removedHandledRef = useRef(false);
 
   const applyProduct = useCallback((next: Product | null) => {
     if (!next) {
@@ -75,6 +82,7 @@ const ProductDetailScreen = (): React.JSX.Element => {
       setProduct(null);
     } finally {
       setLoading(false);
+      initialLoadDoneRef.current = true;
     }
   }, [applyProduct, productId]);
 
@@ -82,13 +90,33 @@ const ProductDetailScreen = (): React.JSX.Element => {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (catalogProduct) {
+      applyProduct(catalogProduct);
+    }
+  }, [applyProduct, catalogProduct]);
+
+  useEffect(() => {
+    if (
+      !initialLoadDoneRef.current ||
+      removedHandledRef.current ||
+      catalogProduct !== undefined
+    ) {
+      return;
+    }
+    removedHandledRef.current = true;
+    Alert.alert('Unavailable', 'This product is no longer available.', [
+      {text: 'OK', onPress: () => navigation.goBack()},
+    ]);
+  }, [catalogProduct, navigation]);
+
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       let inFlight = false;
 
       const tick = async () => {
-        if (cancelled || inFlight || loading) {
+        if (cancelled || inFlight || !initialLoadDoneRef.current) {
           return;
         }
         inFlight = true;
@@ -106,7 +134,7 @@ const ProductDetailScreen = (): React.JSX.Element => {
         cancelled = true;
         clearInterval(intervalId);
       };
-    }, [loadSilent, loading]),
+    }, [loadSilent]),
   );
 
   const showInitialLoader = loading || !product;

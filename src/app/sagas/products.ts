@@ -39,11 +39,12 @@ function* fetchProductsAsync(action: ProductsFetchAction): Generator {
 
 function* pollProductsLoop(): Generator {
   while (true) {
-    yield delay(PRODUCTS_POLL_INTERVAL_MS);
     yield put({
       type: PRODUCTS_FETCH,
       payload: {refresh: true, silent: true},
     });
+    yield take([PRODUCTS_FETCH_SUCCESS, PRODUCTS_FETCH_ERROR]);
+    yield delay(PRODUCTS_POLL_INTERVAL_MS);
   }
 }
 

@@ -30,7 +30,7 @@ const QUICK_LINKS: {label: string; route: string; icon: AppIconName}[] = [
 const HomeScreen = (): React.JSX.Element => {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
-  const {items: products, isLoading, isRefreshing, error} = useSelector(
+  const {items: products, isLoading, isRefreshing, error, lastUpdatedAt} = useSelector(
     (state: RootState) => state.products,
   );
 
@@ -71,6 +71,7 @@ const HomeScreen = (): React.JSX.Element => {
       ) : (
         <FlatList
           data={products}
+          extraData={lastUpdatedAt ?? products.length}
           keyExtractor={item => String(item.id)}
           numColumns={2}
           columnWrapperStyle={styles.listContainer}
