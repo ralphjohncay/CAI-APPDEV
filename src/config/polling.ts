@@ -6,3 +6,6 @@ export const ORDERS_POLL_INTERVAL_MS = 1000;
 
 /** Product detail screen silent refresh interval (ms). */
 export const PRODUCT_DETAIL_POLL_INTERVAL_MS = 1000;
+
+/** How often logged-in users poll for admin order/product activity alerts (ms). */
+export const CUSTOMER_ALERTS_POLL_INTERVAL_MS = 3000;

@@ -137,8 +137,13 @@ export interface CartLine {
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'danger';
 
+export type NotificationSource = 'announcement' | 'activity';
+
 export interface AppNotification {
   id: number;
+  /** Unique key for dismiss storage (`a-12` or `c-34`). */
+  dismissKey: string;
+  source: NotificationSource;
   title?: string | null;
   message: string;
   type: NotificationType;
@@ -147,8 +152,27 @@ export interface AppNotification {
   startsAt?: string;
   expiresAt?: string | null;
   createdAt?: string;
+  category?: 'order' | 'product';
+  event?: string;
 }
 
 export interface NotificationsResponse extends ApiSuccessResponse {
-  notifications: AppNotification[];
+  notifications: Array<Omit<AppNotification, 'dismissKey' | 'source'>>;
+}
+
+export interface CustomerAlert {
+  id: number;
+  category: 'order' | 'product';
+  event: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  entityType?: string | null;
+  entityId?: number | null;
+  createdAt: string;
+}
+
+export interface CustomerAlertsResponse extends ApiSuccessResponse {
+  cursor: number;
+  alerts: CustomerAlert[];
 }

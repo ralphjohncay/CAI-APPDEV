@@ -13,7 +13,11 @@ export async function fetchNotifications(refresh = false): Promise<AppNotificati
       method: 'GET',
       auth: 'auto',
     });
-    return data.notifications ?? [];
+    return (data.notifications ?? []).map(item => ({
+      ...item,
+      source: 'announcement' as const,
+      dismissKey: `a-${item.id}`,
+    }));
   } catch (err) {
     if (err instanceof ApiError && (err.status === 404 || err.status === 501)) {
       return [];

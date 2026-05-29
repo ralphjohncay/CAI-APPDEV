@@ -73,26 +73,26 @@ const NotificationCard = ({
 const NotificationBar = (): React.JSX.Element | null => {
   const insets = useSafeAreaInsets();
   const {visible, dismiss} = useNotifications();
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   if (visible.length === 0) {
     return null;
   }
 
-  const toggleExpand = (id: number) => {
+  const toggleExpand = (key: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedId(prev => (prev === id ? null : id));
+    setExpandedKey(prev => (prev === key ? null : key));
   };
 
   return (
     <View style={[styles.wrap, {paddingTop: insets.top > 0 ? 4 : 8}]}>
       {visible.map(item => (
         <NotificationCard
-          key={item.id}
+          key={item.dismissKey}
           item={item}
-          expanded={expandedId === item.id}
-          onToggle={() => toggleExpand(item.id)}
-          onDismiss={() => dismiss(item.id)}
+          expanded={expandedKey === item.dismissKey}
+          onToggle={() => toggleExpand(item.dismissKey)}
+          onDismiss={() => dismiss(item.dismissKey)}
         />
       ))}
     </View>
