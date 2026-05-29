@@ -1,41 +1,25 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import {apiJsonRequest} from './client';
 import {ApiError} from './errors';
+import {
+  getCustomerAlertCursorForUser,
+  setCustomerAlertCursorForUser,
+} from '../services/customerAlertStorage';
 import type {CustomerAlert, CustomerAlertsResponse} from './types';
 
-const CURSOR_KEY = '@ralphs/customer_alert_cursor';
-
-export async function getCustomerAlertCursor(): Promise<number | null> {
-  try {
-    const raw = await AsyncStorage.getItem(CURSOR_KEY);
-    return raw !== null ? parseInt(raw, 10) : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function setCustomerAlertCursor(cursor: number): Promise<void> {
-  try {
-    await AsyncStorage.setItem(CURSOR_KEY, String(cursor));
-  } catch {
-    /* ignore */
-  }
-}
-
-/** Bootstrap cursor (no new alerts). */
-export async function bootstrapCustomerAlerts(): Promise<number> {
+/** Bootstrap cursor for this user (does not return historical alerts). */
+export async function bootstrapCustomerAlerts(userId: number): Promise<number> {
   const data = await apiJsonRequest<CustomerAlertsResponse>('/api/customer-alerts', {
     method: 'GET',
     auth: 'required',
   });
   const cursor = data.cursor ?? 0;
-  await setCustomerAlertCursor(cursor);
+  await setCustomerAlertCursorForUser(userId, cursor);
   return cursor;
 }
 
 /** Poll alerts since last cursor; returns new items and updated cursor. */
 export async function fetchCustomerAlertsSince(
+  userId: number,
   since: number,
 ): Promise<{alerts: CustomerAlert[]; cursor: number}> {
   try {
@@ -53,4 +37,15 @@ export async function fetchCustomerAlertsSince(
     }
     throw err;
   }
+}
+
+export async function getCustomerAlertCursor(userId: number): Promise<number | null> {
+  return getCustomerAlertCursorForUser(userId);
+}
+
+export async function setCustomerAlertCursor(
+  userId: number,
+  cursor: number,
+): Promise<void> {
+  await setCustomerAlertCursorForUser(userId, cursor);
 }
