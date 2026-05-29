@@ -8,16 +8,32 @@ import {
   getCustomerAlertCursor,
   setCustomerAlertCursor,
 } from '../api/customerAlerts';
-import type {CustomerAlert, Product} from '../api/types';
+import type {CustomerAlert, NotificationType, Order, Product} from '../api/types';
 import type {RootState} from '../app/reducers';
 import {CUSTOMER_ALERTS_POLL_INTERVAL_MS} from '../config/polling';
 import {navigate} from '../navigations/navigationRef';
+import {fetchMyOrders} from '../services/orders';
+import {formatOrderStatus} from '../theme/orderStatus';
 import ROUTES from '../utils/routes';
 
 type LocalAlert = CustomerAlert & {localKey?: string};
 
+function alertTypeForOrderStatus(status: string): NotificationType {
+  switch (status) {
+    case 'approved':
+    case 'completed':
+      return 'success';
+    case 'canceled':
+      return 'danger';
+    case 'pending_approval':
+      return 'warning';
+    default:
+      return 'info';
+  }
+}
+
 /**
- * Polls admin activity and watches the shop catalog for add/remove (native Alert, no FCM).
+ * Polls admin activity; watches shop catalog and order status (native Alert, no FCM).
  */
 export function useCustomerAlerts(): void {
   const isLoggedIn = useSelector((state: RootState) => !!state.auth.session?.token);
@@ -27,7 +43,9 @@ export function useCustomerAlerts(): void {
   const showingRef = useRef(false);
   const shownKeysRef = useRef<Set<string>>(new Set());
   const catalogReadyRef = useRef(false);
+  const ordersReadyRef = useRef(false);
   const prevCatalogRef = useRef<Map<number, Product>>(new Map());
+  const prevOrdersRef = useRef<Map<number, string>>(new Map());
 
   const showNextAlert = useCallback(() => {
     if (!mounted.current || showingRef.current || queueRef.current.length === 0) {
@@ -129,6 +147,54 @@ export function useCustomerAlerts(): void {
     }
   }, [enqueueAlerts, isLoggedIn]);
 
+  const pollOrders = useCallback(async () => {
+    if (!isLoggedIn || !mounted.current) {
+      return;
+    }
+
+    try {
+      const orders = await fetchMyOrders(true);
+      const next = new Map(orders.map((o: Order) => [o.id, o.status ?? '']));
+
+      if (!ordersReadyRef.current) {
+        ordersReadyRef.current = true;
+        prevOrdersRef.current = next;
+        return;
+      }
+
+      const orderAlerts: LocalAlert[] = [];
+
+      for (const order of orders) {
+        const prevStatus = prevOrdersRef.current.get(order.id);
+        const newStatus = order.status ?? '';
+        if (prevStatus !== undefined && prevStatus !== newStatus) {
+          const prevLabel = formatOrderStatus(prevStatus);
+          const newLabel = formatOrderStatus(newStatus);
+          orderAlerts.push({
+            id: order.id,
+            category: 'order',
+            event: 'status_changed',
+            title: 'Order updated',
+            message: `Order #${order.id} status changed: ${prevLabel} → ${newLabel}.`,
+            type: alertTypeForOrderStatus(newStatus),
+            entityType: 'Order',
+            entityId: order.id,
+            createdAt: new Date().toISOString(),
+            localKey: `order-status-${order.id}-${newStatus}`,
+          });
+        }
+      }
+
+      prevOrdersRef.current = next;
+
+      if (orderAlerts.length > 0) {
+        enqueueAlerts(orderAlerts);
+      }
+    } catch {
+      /* silent */
+    }
+  }, [enqueueAlerts, isLoggedIn]);
+
   useEffect(() => {
     if (!isLoggedIn || !mounted.current) {
       return;
@@ -191,18 +257,25 @@ export function useCustomerAlerts(): void {
 
     if (!isLoggedIn) {
       catalogReadyRef.current = false;
+      ordersReadyRef.current = false;
       prevCatalogRef.current = new Map();
+      prevOrdersRef.current = new Map();
       queueRef.current = [];
       showingRef.current = false;
       return;
     }
 
-    void pollApi();
+    const tick = () => {
+      void pollApi();
+      void pollOrders();
+    };
 
-    const interval = setInterval(() => void pollApi(), CUSTOMER_ALERTS_POLL_INTERVAL_MS);
+    tick();
+
+    const interval = setInterval(tick, CUSTOMER_ALERTS_POLL_INTERVAL_MS);
     const onAppState = (state: AppStateStatus) => {
       if (state === 'active' && isLoggedIn) {
-        void pollApi();
+        tick();
       }
     };
     const sub = AppState.addEventListener('change', onAppState);
@@ -212,5 +285,5 @@ export function useCustomerAlerts(): void {
       clearInterval(interval);
       sub.remove();
     };
-  }, [isLoggedIn, pollApi]);
+  }, [isLoggedIn, pollApi, pollOrders]);
 }
